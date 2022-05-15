@@ -1,0 +1,3026 @@
+openapi: 3.0.0
+info:
+  title: BBS XHR API v.2.0
+  description: |
+    Vijn XHR API spec (Backend version: 2.0.85)
+  version: 1.0.0-oas3
+  contact:
+    name: API Support
+    email: vbliznetsov@ptsecurity.ru
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+  requestBodies:
+    agentActivationCodeInputJSON:
+      description: Agent activation information that was provided by an agent
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+            properties:
+              code:
+                type: string
+                minLength: 6
+                description: Token activation code as displayed by the agent
+                example: 49EQGA
+    changePasswordInputJSON:
+      description: All parameters are required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - oldPassword
+              - newPassword
+            properties:
+              oldPassword:
+                description: Current user password
+                type: string
+                nullable: false
+                minLength: 8
+                example: P@ssw0rd
+              newPassword:
+                description: New password
+                type: string
+                nullable: false
+                minLength: 8
+                example: P@ssw0rd
+    markVulnerabilityDataInputJSON:
+      description: All parameters are optional
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              starred:
+                type: boolean
+                nullable: false
+                description: Mark specified vulnerability as starred
+                example: true
+              fixed:
+                type: boolean
+                nullable: false
+                description: Mark specified vulnerability as fixed
+                example: false
+              falsePositive:
+                type: boolean
+                nullable: false
+                description: Mark specified vulnerability as false-positive
+                example: true
+    loginDataInputJSON:
+      description: All parameters are required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                description: User account email
+                minLength: 5
+                maxLength: 190
+                example: john@example.com
+              password:
+                type: string
+                description: User password
+                minLength: 1
+                example: P@ssw0rd
+    validateSiteInputJSON:
+      description: Validate site before creation
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
+                $ref: '#/components/schemas/XHRSiteURL'
+    siteInputJSON:
+      description: Only 'url' parameter is required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
+                $ref: '#/components/schemas/XHRSiteURL'
+              name:
+                $ref: '#/components/schemas/XHRSiteName'
+              verification:
+                $ref: '#/components/schemas/XHRVerificationData'
+              authentication:
+                $ref: '#/components/schemas/XHRAuthenticationData'
+    registrationDataInputJSON:
+      description: All parameters are required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                description: User account email
+                type: string
+                format: email
+                minLength: 5
+                maxLength: 190
+                example: john@example.com
+              password:
+                description: User password
+                type: string
+                minLength: 8
+                example: P@ssw0rd
+              language:
+                $ref: '#/components/schemas/localeNameEnum'
+    resetPasswordDataInputJSON:
+      description: All parameters are required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                description: User account email
+                minLength: 5
+                maxLength: 190
+                example: john@example.com
+              language:
+                $ref: '#/components/schemas/localeNameEnum'
+    confirmationResendDataInputJSON:
+      description: Request for confirmation email re-send
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              language:
+                $ref: '#/components/schemas/localeNameEnum'
+    validatePasswordResetTokenInputJSON:
+      description: Validate password reset token
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+            properties:
+              token:
+                type: string
+                description: Token that was sent in a password reset email
+                minLength: 64
+                example: 7yUbMyXQ48lvLf1KJjSTzBP4vXcaPAQsuR4YDRjQjS17wnX4KxTyMsHJXAK4qmvjI7sWGX6GLqQoHLCkVFWFfu7inw2rIgknsR4h0sLeCSsfcRtxdapXtTvj
+    setPasswordDataInputJSON:
+      description: Information for password reset
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - newPassword
+            properties:
+              token:
+                type: string
+                description: Token that was sent in a password reset email
+                minLength: 64
+                example: 7yUbMyXQ48lvLf1KJjSTzBP4vXcaPAQsuR4YDRjQjS17wnX4KxTyMsHJXAK4qmvjI7sWGX6GLqQoHLCkVFWFfu7inw2rIgknsR4h0sLeCSsfcRtxdapXtTvj
+              newPassword:
+                type: string
+                description: Password to set for (important) an owner of the token
+                minLength: 8
+                example: P@ssw0rd
+    confirmEmailDataInputJSON:
+      description: Email confirmation data
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+            properties:
+              token:
+                type: string
+                description: Token that was sent in a confirmation email
+                minLength: 120
+                example: zBwSQeMcaYpmAMgYowX9CUxoWnJBxx3evQIDU2xvwK26VMeYMEpf8RXQ7rHgBPlHtJ7zUSoCZuEdtbW0kYc9hIH547nlGLn8mEOOnoYsP6jzRptd7e8EIMsx
+    editAgentDataInputJSON:
+      description: All parameters are optional
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                description: User-defined name for agent
+                type: string
+                example: Virtual linux machine in DMZ
+                minLength: 1
+                maxLength: 50
+    editAccountDataInputJSON:
+      description: All parameters are optional
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - username
+              - occupation
+            properties:
+              username:
+                description: Provided user name
+                type: string
+                minLength: 3
+                maxLength: 45
+                nullable: true
+                example: John Doe
+              occupation:
+                description: User's occupation
+                type: string
+                maxLength: 45
+                nullable: true
+                example: Security Analyst
+    feedbackDataInputJSON:
+      description: All parameters are required
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            description: Sent user feedback
+            properties:
+              message:
+                description: Message text
+                type: string
+                minLength: 10
+                maxLength: 2000
+                nullable: false
+                example: I would like to be able to mark a bunch of similar vulnerabilities as false-positives as there are 1000's of them on every page of the site and doing so one-by-one is inconvenient
+              email:
+                description: Email to reply to feedback
+                type: string
+                format: email
+                minLength: 5
+                maxLength: 190
+                example: john@example.com
+    sharedDataInputJSON:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ttl:
+                $ref: '#/components/schemas/sharedLinkTtlEnum'
+              emails:
+                description: List of emails that have permission for reading the scan report
+                type: array
+                nullable: true
+                example: ["john@example.com"]
+  parameters:
+    agentID:
+      in: path
+      name: agentID
+      schema:
+        type: integer
+      required: true
+      description: Numerical ID of user's agent
+    agentFilename:
+      in: path
+      name: filename
+      schema:
+        type: string
+        minLength: 1
+      required: true
+      description: Filename of an agent to download
+      example: Agent.exe
+    siteID:
+      in: path
+      name: siteID
+      schema:
+        type: integer
+      required: true
+      description: Numerical ID of user's site
+    scanID:
+      in: path
+      name: scanID
+      schema:
+        type: integer
+      required: true
+      description: Numerical ID of user's scan for previously specified site
+    vulnID:
+      in: path
+      name: vulnID
+      schema:
+        type: integer
+      required: true
+      description: Numerical ID of site's vulnerability
+    notificationID:
+      in: path
+      name: notificationID
+      schema:
+        type: integer
+      required: true
+      description: Numerical ID of notification
+    sharedUUID:
+      in: path
+      name: sharedUUID
+      schema:
+        type: string
+      required: true
+      description: UUID of shared's scan
+    vulnerabilityLocaleKey:
+      in: path
+      name: vulnerabilityLocaleKey
+      schema:
+        $ref: '#/components/schemas/vulnerabilityLocaleKey'
+      required: true
+      description: Vulnerability locale key
+    localeName:
+      in: path
+      name: localeName
+      schema:
+        $ref: '#/components/schemas/localeNameEnum'
+      required: true
+      description: 'Locale name (en, ru)'
+    csrfToken:
+      in: header
+      name: X-CSRFToken
+      schema:
+        type: string
+        example: Mn1ws1YUnOG6FFQsmzyuRGwm4HuXY6yAYNaWzh9YhvMR9jrTGHcsQbF4h2RPVIaq
+      description: Value of 'csrf_token' cookie
+      required: true
+  schemas:
+    sessionCookie:
+      type: string
+      example: session=QkJZ9njTrmvhB79njIfHaNBTPmAATIQu2QVaHa6Uyugj0Cksf0; Domain=.web.rd.ptsecurity.ru; HttpOnly; Path=/; SameSite=Lax
+    baseResponse:
+      type: object
+      description: Base response for any request
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+          description: Indicates whether request was successful
+          example: true
+    errorResponse:
+      allOf:
+        - $ref: '#/components/schemas/baseResponse'
+        - type: object
+          description: Error occurred during processing of the request
+          required:
+            - error
+            - ok
+          properties:
+            ok:
+              example: false
+            error:
+              type: object
+              required:
+                - code
+                - description
+              properties:
+                code:
+                  type: string
+                  description: 'Unique error code, for developers and debugging'
+                  example: UNAUTHORIZED
+                description:
+                  type: string
+                  description: Human-readable description of error
+                  example: The request has not been applied because it lacks valid authentication credentials for the target resource.
+                details:
+                  type: object
+                  description: Error-specific technical details
+    rateLimitedResponse:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: TOO_MANY_REQUESTS
+                description:
+                  example: Your IP address has sent too many requests recently. Please consider scheduling a cooldown period or contact your system administrator.
+    siteLinkNotFound:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: SITE_NOT_FOUND
+                description:
+                  example:
+    sharedLinkLoginRequired:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: HTTP_ERROR_401
+                description:
+                  example: Login required
+    sharedLinkPermissionDenied:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: SHARED_LINK_PERMISSION_DENIED
+                description:
+                  example: You have no permission to this report
+    sharedLinkNotFound:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: SHARED_LINK_NOT_FOUND
+    apiTokenLinkNotFound:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: API_TOKEN_NOT_FOUND
+                description:
+                  example:
+                details:
+                  example:
+    apiTokenCreatePermissionDenied:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: PERMISSION_DENIED
+                description:
+                  example: 'Permission error by authority: CAN_ADD_API_TOKEN'
+                details:
+                  type: object
+                  properties:
+                    permissions:
+                      type: string
+                      example: CAN_ADD_API_TOKEN
+    apiTokenDeletePermissionDenied:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: PERMISSION_DENIED
+                description:
+                  example: 'Permission error by authority: can_delete_api_token'
+                details:
+                  type: object
+                  properties:
+                    permissions:
+                      type: string
+                      example: CAN_DELETE_API_TOKEN
+    requestFullScanPermissionDenied:
+      allOf:
+        - $ref: '#/components/schemas/errorResponse'
+        - properties:
+            ok:
+              example: false
+            error:
+              properties:
+                code:
+                  example: PERMISSION_DENIED
+                description:
+                  example: "Permission error by authority: CAN_USE_FULL_SCAN"
+                details:
+                  type: object
+                  properties:
+                    permissions:
+                      type: string
+                      example: CAN_USE_FULL_SCAN
+    authenticationTypesEnum:
+      type: string
+      nullable: false
+      description: Current authentication type selected by user for specified site
+      enum:
+        - HTTP_BASIC
+        - HTML_FORM_BASED
+        - DISABLED
+      example: HTML_FORM_BASED
+    verificationTypesEnum:
+      type: string
+      nullable: false
+      description: Current verification type selected by user for specified site
+      enum:
+        - HTML_FILE
+        - AGENT
+      example: HTML_FILE
+    localeNameEnum:
+      type: string
+      nullable: false
+      description: List of possible languages
+      enum:
+        - en
+        - ru
+      example: en
+    vulnerabilityLocaleKey:
+      type: string
+      nullable: false
+      description: String code of vulnerability description
+      example: cross_site_scripting
+    ErrorReasonEnum:
+      type: string
+      nullable: true
+      description: List of all possible scan errors
+      enum:
+        - TARGET_CONNECT_FAILED
+        - TARGET_CONNECTION_TIMED_OUT
+        - TARGET_PAGE_IS_STATIC
+        - TARGET_DOWNLOAD_LIMIT_EXCEEDED
+        - AGENT_IS_UNAVAILABLE
+        - TARGET_REDIRECT_LIMIT
+        - TARGET_DNS_RESOLUTION_FAILED
+        - TARGET_HTTP_ERROR_404
+        - TARGET_HTTP_ERROR_500
+        - UNREACHABLE_REDIRECT
+        - UNKNOWN_ERROR
+      example: null
+    ScanStatusEnum:
+      type: string
+      nullable: false
+      description: List of all possible scan states
+      enum:
+        - CREATED
+        - SENT_START_TASK
+        - STARTED
+        - SENT_STOP_TASK
+        - STOPPED
+        - FINISHED
+      example: FINISHED
+    SeverityTypeEnum:
+      type: string
+      nullable: false
+      description: List of all severity types for vulnerabilities
+      enum:
+        - HIGH
+        - MEDIUM
+        - LOW
+        - INFO
+      example: HIGH
+    VulnChannelsEnum:
+      type: string
+      nullable: false
+      description: Possible vulnerability channels
+      enum:
+        - PARAM
+        - HEADER
+        - URL_PATH
+        - URL_QUERY
+        - COOKIE
+        - COMBO
+      example: PARAM
+    HTTPVerbsEnum:
+      type: string
+      nullable: false
+      description: List of commonly used HTTP methods
+      enum:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - HEAD
+        - OPTIONS
+      example: POST
+    NotificationTypeEnum:
+      type: string
+      nullable: false
+      description: List of possible notification types
+      enum:
+        - INFO
+        - SCAN_FINISHED
+        - SCAN_STOPPED
+        - SCAN_FAILED
+        - VERIFICATION_SUCCESS
+        - VERIFICATION_FAILED
+        - AUTH_SUCCEEDED
+        - AUTH_FAILED
+      example: SCAN_FINISHED
+    AgentStatusEnum:
+      type: string
+      nullable: false
+      description: List of all possible agent states
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - DELETED
+      example: ACTIVE
+    XHRSiteName:
+      type: string
+      nullable: true
+      description: User-defined name of the site
+      minLength: 1
+      maxLength: 50
+      example: Company ITSM portal
+    XHRSiteURL:
+      type: string
+      description: URL of target site
+      maxLength: 255
+      example: 'https://itsm.example.com/'
+    XHRUserEmail:
+      type: string
+      nullable: true
+      description: User email. Can be empty if user is a guest.
+      minLength: 5
+      maxLength: 190
+      example: john@example.com
+    XHRAccount:
+      type: object
+      description: Current user account details
+      properties:
+        email:
+          $ref: '#/components/schemas/XHRUserEmail'
+        username:
+          type: string
+          nullable: true
+          description: Provided user name
+          minLength: 3
+          maxLength: 45
+          example: John Doe
+        occupation:
+          type: string
+          nullable: true
+          description: Current user occupation
+          maxLength: 45
+          example: Security Analyst
+        createdAt:
+          type: string
+          format: date-time
+          description: Datetime of account creation
+        validTo:
+          type: string
+          format: date-time
+          description: Datetime of account expiration
+        registrationStatus:
+          type: object
+          required:
+            - isRegistered
+            - emailConfirmed
+          properties:
+            isRegistered:
+              type: boolean
+              description: 'True if this is a registered, non-guest account'
+              example: true
+            emailConfirmed:
+              type: boolean
+              description: True if an email of the account was confirmed
+              example: false
+    RoleLimit:
+      type: object
+      description: This object represents current user role limits ant their current values
+      properties:
+        current:
+          nullable: true
+          type: integer
+          example: 3
+          description: Current number of items of this type, owned by user
+        limit:
+          nullable: false
+          type: integer
+          example: 10
+          description: Maximum number of items of this type, user can own
+    XHRRole:
+      type: object
+      description: This object represents current user role
+      properties:
+        roleId:
+          type: integer
+          nullable: false
+          description: Unique ID of role
+          example: 2
+        roleName:
+          type: string
+          nullable: false
+          description: Human-readable name of a role
+          example: Guest
+        permissions:
+          type: array
+          items:
+            type: string
+            description: List of role permissions
+            enum:
+              - VALIDATION_AGENT
+              - TARGET_AUTH
+              - SITE_HISTORY
+              - CAN_START_SCAN
+          uniqueItems: true
+          example:
+            - VALIDATION_AGENT
+            - SITE_HISTORY
+        limits:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RoleLimit'
+    XHRSiteShort:
+      type: object
+      description: This object represents user's site
+      properties:
+        id:
+          type: integer
+          description: Unique ID of site (user scope)
+          nullable: false
+          example: 2
+        verified:
+          type: boolean
+          nullable: false
+          example: true
+        name:
+          type: string
+          nullable: true
+          description: User-defined name of site
+          example: Company ITSM portal
+        url:
+          type: string
+          nullable: false
+          description: Target site URL. This is an entry point for all subsequent scans.
+          example: 'https://itsm.example.com/'
+        agent:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/XHRAgent'
+        createdAt:
+          type: string
+          format: date-time
+        lastScan:
+          $ref: '#/components/schemas/XHRScanShort'
+        authentication:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              nullable: false
+              description: false, if authentication disabled
+              example: true
+            status:
+              type: string
+              description: Current authentication status
+              enum:
+                - NOT_CHECKED
+                - CHECKING
+                - SUCCESS
+                - FAILED
+    XHRSiteShared:
+      type: object
+      description: This object represents user's site
+      properties:
+        id:
+          type: integer
+          description: Unique ID of site (user scope)
+          nullable: false
+          example: 2
+        name:
+          type: string
+          nullable: true
+          description: User-defined name of site
+          example: Company ITSM portal
+        url:
+          type: string
+          nullable: false
+          description: Target site URL. This is an entry point for all subsequent scans.
+          example: 'https://itsm.example.com/'
+        createdAt:
+          type: string
+          format: date-time
+    XHRVerificationData:
+      type: object
+      description: Data for site ownership verification
+      properties:
+        type:
+          $ref: '#/components/schemas/verificationTypesEnum'
+        htmlFile:
+          type: object
+          description: Data for HTML file verification type
+          nullable: true
+          properties:
+            fileName:
+              type: string
+              description: Name of HTML verification file
+              nullable: false
+              example: 2f5efac781d59c86a5637dcaed73745a2c362c227fdf264ea1db5a58b1da39a6.html
+            key:
+              type: string
+              description: Key stored in verification file
+              nullable: false
+              example: f85a3e4d99046f905687a076fa1b547b07268f81dedde930637a9b31e839fe23
+        agent:
+          type: object
+          description: Data for agent verification type
+          nullable: true
+          properties:
+            id:
+              type: integer
+              nullable: false
+              description: ID of existing agent to use
+              example: 2
+    XHRAuthenticationData:
+      type: object
+      description: 'Site authentication settings. Equals to null if authentication on this site is disabled. If authentication is enabled, at least one corresponding child property is present.'
+      nullable: true
+      required:
+        - type
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/authenticationTypesEnum'
+        httpBasic:
+          $ref: '#/components/schemas/XHRSiteAuthHTTPBasic'
+        htmlFormBased:
+          $ref: '#/components/schemas/XHRSiteAuthHTMLFormBased'
+    XHRSiteSettings:
+      type: object
+      description: This object represents current site settings
+      properties:
+        name:
+          type: string
+          description: User-defined name for site
+          nullable: false
+          example: Company ITSM portal
+        url:
+          type: string
+          description: Target URL for scanning
+          example: 'https://itsm.example.com/'
+        verification:
+          $ref: '#/components/schemas/XHRVerificationData'
+        authentication:
+          $ref: '#/components/schemas/XHRAuthenticationData'
+    XHRSiteAuthHTMLFormBased:
+      type: object
+      description: Parameters for HTML form-based authentication
+      required:
+        - username
+        - password
+        - url
+        - successString
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Username for autoform authentication
+          example: admin
+        password:
+          type: string
+          minLength: 1
+          description: Password for autoform authentication
+          example: P@ssw0rd
+        url:
+          type: string
+          minLength: 5
+          description: Form location URL
+          example: 'https://itsm.example.com/login/'
+        successString:
+          type: string
+          minLength: 3
+          description: String on target page to check if authentication was successful
+          example: My profile
+    XHRVulnChannel:
+      type: object
+      nullable: true
+      description: Optional information about channel of injection
+      properties:
+        httpVerb:
+          $ref: '#/components/schemas/HTTPVerbsEnum'
+        type:
+          $ref: '#/components/schemas/VulnChannelsEnum'
+        parameterName:
+          type: string
+          nullable: false
+          description: Parameter name
+          example: id
+    XHRSiteAuthHTTPBasic:
+      type: object
+      description: Parameters for HTTP basic authentication
+      required:
+        - username
+        - password
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          description: Username for HTTP authentication
+          minLength: 1
+          example: admin
+        password:
+          type: string
+          description: Password for HTTP authentication
+          minLength: 1
+          example: P@ssw0rd
+    XHRDetectedApp:
+      type: object
+      description: Application found on server
+      properties:
+        name:
+          type: string
+          nullable: false
+          description: Application name
+          example: Joomla
+        version:
+          type: string
+          nullable: false
+          description: Application version
+          example: 12.4.2
+        language:
+          type: string
+          nullable: false
+          description: Application programming language
+          example: PHP
+    XHRCEList:
+      type: array
+      nullable: false
+      items:
+        $ref: '#/components/schemas/XHRCVE'
+    XHRCVE:
+      type: object
+      description: This object contains information about CVE found on site
+      properties:
+        solutionLink:
+          type: string
+          nullable: false
+          example: 'https://www.drupal.org'
+        link:
+          type: string
+          nullable: false
+          description: CVE full description link
+          example: 'http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-6665'
+        solution:
+          type: string
+          nullable: false
+          example: 'To fix the vulnerability update your software according to the used platform. All necessary information is available here:'
+        cveDescription:
+          type: string
+          nullable: false
+          example: 'Cross-site scripting (XSS) vulnerability in the Ajax handler in Drupal 7.x before 7.39 and the Ctools module 6.x-1.x before 6.x-1.14 for Drupal allows remote attackers to inject arbitrary web script or HTML via vectors involving a whitelisted HTML element, possibly related to the ''a'' tag.'
+        cveId:
+          type: string
+          nullable: false
+          description: CVE Unique number
+          example: CVE-2015-6665
+        cvss:
+          type: array
+          nullable: false
+          items:
+            $ref: '#/components/schemas/XHRCVSS'
+        title:
+          type: string
+          nullable: false
+          example: Cross-site Scripting
+    XHRCVSS:
+      type: object
+      description: Common Vulnerability Scoring System data
+      properties:
+        tempScore:
+          type: number
+          nullable: false
+          example: 3.2
+        tempMetrics:
+          type: string
+          nullable: false
+          example: '(AV:N/AC:M/Au:N/C:N/I:P/A:N/E:U/RL:OF/RC:C)'
+        baseMetrics:
+          type: string
+          nullable: false
+          example: '(AV:N/AC:M/Au:N/C:N/I:P/A:N)'
+        baseScore:
+          type: number
+          nullable: false
+          example: 4.3
+    XHRErrorPageList:
+      type: object
+      description: Mapping of integer error status codes to list of error pages
+      # FIXME: this should be done by "additionalProperties"
+      properties:
+        '400':
+          $ref: '#/components/schemas/XHRErrorPageListByCode'
+        '404':
+          $ref: '#/components/schemas/XHRErrorPageListByCode'
+        '500':
+          $ref: '#/components/schemas/XHRErrorPageListByCode'
+        '503':
+          $ref: '#/components/schemas/XHRErrorPageListByCode'
+    XHRErrorPageListByCode:
+      type: array
+      description: Array of error page URLs and corresponding raw request bodies
+      nullable: true
+      items:
+        type: object
+        properties:
+          url:
+            type: string
+            example: 'https://itsm.example.com/ticket/create'
+          rawRequest:
+            type: string
+            example: |-
+              POST /ticket/create HTTP/1.1
+              Host: itsm.example.com
+              content-type: application/x-www-form-urlencoded
+              content-length: 66
+
+              subject=%3C/textarea%3E%3Cscript%3Econfirm%2820836%29%3C/script%3E
+    XHRDetectedHeaders:
+      type: object
+      description: HTTP headers containing information about server
+      properties:
+        name:
+          type: string
+          description: Header name
+          nullable: false
+          example: Server
+        value:
+          type: string
+          description: Header value
+          nullable: false
+          example: Apache/2.4.6 (Win32) PHP/5.4.17
+    XHRScanSummary:
+      type: object
+      description: This object contains information about site software and CVE
+      properties:
+        cveList:
+          type: array
+          description: 'List of CVEs lists found on server, organized in found applications order'
+          nullable: true
+          items:
+            $ref: '#/components/schemas/XHRCEList'
+        errorPages:
+          $ref: '#/components/schemas/XHRErrorPageList'
+        apps:
+          type: array
+          description: List of detected applications on server
+          nullable: true
+          items:
+            $ref: '#/components/schemas/XHRDetectedApp'
+        usesHttps:
+          type: boolean
+          nullable: false
+          description: Marks whether site works over HTTPS
+          example: false
+        usesHsts:
+          type: boolean
+          nullable: false
+          description: Marks whether site uses HTTP Strict Transport Security
+          example: false
+        lastScanStarted:
+          type: string
+          format: date-time
+          description: Datetime last scan was started
+        lastScanFinished:
+          type: string
+          format: date-time
+          description: Datetime last scan was finished
+        duration:
+          type: integer
+          nullable: true
+          description: Last scan duration in seconds
+          example: 3
+        headers:
+          type: array
+          nullable: true
+          description: List of headers disclosing information about server
+          items:
+            $ref: '#/components/schemas/XHRDetectedHeaders'
+    XHRScanShort:
+      type: object
+      description: This object represents a single scan
+      properties:
+        id:
+          type: integer
+          nullable: false
+          example: 3
+        agent:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/XHRAgent'
+        authStatus:
+          type: string
+          description: Authentication status for scan
+          enum:
+            - NOT_CHECKED
+            - CHECKING
+            - SUCCESS
+            - FAILED
+        startedAt:
+          type: string
+          format: date-time
+          description: Date-time when BBS actually started to scan specified target
+        finishedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ScanStatusEnum'
+        errorReason:
+          $ref: '#/components/schemas/ErrorReasonEnum'
+        progress:
+          type: integer
+          nullable: true
+          example: 82
+        vulnStats:
+          $ref: '#/components/schemas/VulnerabilityStats'
+        queuePosition:
+          type: integer
+          nullable: true
+          example: 2
+    XHRScanShared:
+      type: object
+      description: This object represents a single scan
+      properties:
+        id:
+          type: integer
+          nullable: false
+          example: 3
+        agent:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/XHRAgent'
+        startedAt:
+          type: string
+          format: date-time
+          description: Date-time when BBS actually started to scan specified target
+        finishedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ScanStatusEnum'
+        errorReason:
+          $ref: '#/components/schemas/ErrorReasonEnum'
+        progress:
+          type: integer
+          nullable: true
+          example: 82
+        vulnStats:
+          $ref: '#/components/schemas/VulnerabilityStats'
+    XHRVulnLocalization:
+      type: object
+      description: A hashmap with vulnerability localization key as a key and the object as the value.
+      additionalProperties:
+        $ref: '#/components/schemas/VulnerabilityLocalization'
+    VulnerabilityLocalization:
+      type: object
+      description: 'this object contain field, which must be used in localization'
+      properties:
+        name:
+          type: string
+          nullable: true
+          example: SQL Injection
+        description:
+          type: string
+          nullable: true
+          example: The application does not sufficiently validate user input that allows an attacker to manipulate SQL query logic by injecting arbitrary SQL operators.
+        howTo:
+          type: string
+          nullable: true
+          example: 'Prepared statements ensure that an attacker is not able to change the intent of a query, even if SQL commands are inserted by an attacker...'
+    XHRVulnCategoryLocalization:
+      type: object
+      description: A hashmap with vulnerability category localization key as a key and the object as the value.
+      additionalProperties:
+        $ref: '#/components/schemas/VulnerabilityCategoryLocalization'
+    VulnerabilityCategoryLocalization:
+      type: object
+      description: 'this object contain field, which must be used in localization'
+      properties:
+        name:
+          type: string
+          example: SQL Injection
+    XHRFaqLocalization:
+      type: array
+      description: Array of FAQ localization items
+      items:
+        description: 'this object contain field, which must be used in localization'
+        type: object
+        properties:
+          question:
+            type: string
+            nullable: true
+            example: How to fix N?
+          answer:
+            type: string
+            nullable: true
+            example: To fix X you must do Y and Z...
+    XHREulaLocalization:
+      type: object
+    XHRAgent:
+      type: object
+      description: Agent entitiy for /agents
+      properties:
+        id:
+          type: integer
+          description: Unique agent id (user scope)
+          example: 4
+        name:
+          type: string
+          description: User-defined name of current agent
+          example: Virtual linux machine in DMZ
+        status:
+          $ref: '#/components/schemas/AgentStatusEnum'
+        createdAt:
+          nullable: true
+          type: string
+          format: date-time
+          description: Date-time of agent activation
+        connectedAt:
+          nullable: true
+          type: string
+          format: date-time
+          description: Datetime of last agent connect action
+        disconnectedAt:
+          nullable: true
+          type: string
+          format: date-time
+          description: Datetime of last agent disconnect action
+    XHRVulnerabilityShort:
+      type: object
+      description: This object represents a single found vulnerability
+      properties:
+        id:
+          type: integer
+          nullable: false
+          description: Internal id of detected vulnerability
+          example: 12
+        urlRel:
+          type: string
+          nullable: false
+          description: Relative URL where vulnerability was found
+          example: /ticket/create
+        urlFull:
+          type: string
+          nullable: false
+          description: Full URL where vulnerability was found
+          example: 'https://itsm.example.com/ticket/create'
+        falsePositive:
+          type: boolean
+          nullable: false
+          description: Tells whether vulnerability was marked as false-positive by user
+          example: false
+        fixed:
+          type: boolean
+          nullable: false
+          description: Tells whether vulnerability was marked as fixed by user
+          example: false
+        starred:
+          type: boolean
+          nullable: false
+          description: Tells whether vulnerability was starred by user
+          example: true
+        channel:
+          $ref: '#/components/schemas/XHRVulnChannel'
+        requestRaw:
+          type: string
+          nullable: true
+          description: Raw HTTP request
+          example: |-
+            POST /ticket/create HTTP/1.1
+            Host: itsm.example.com
+            content-type: application/x-www-form-urlencoded
+            content-length: 66
+
+            subject=%3C/textarea%3E%3Cscript%3Econfirm%2820836%29%3C/script%3E
+        responseRaw:
+          type: string
+          nullable: true
+          description: Raw HTTP response
+          example: |-
+            HTTP/1.1 200 OK
+            Content-Length: 89
+            Content-Type: text/html; charset=UTF-8
+
+            <!DOCTYPE html><html><body><p>Invalid subject: </textarea><script>confirm(20836)</script>
+        responseTime:
+          type: number
+          nullable: true
+          description: Execution time in seconds
+          example: 1.123
+        matches:
+          $ref: '#/components/schemas/XHRMatchesArray'
+        vector:
+          type: string
+          nullable: true
+          description: Optional string containing attack vector
+          example: </textarea><script>confirm(20836)</script>
+        severity:
+          $ref: '#/components/schemas/SeverityTypeEnum'
+        type:
+          $ref: '#/components/schemas/XHRVulnerabilityType'
+        createdAt:
+          type: string
+          format: date-time
+          description: Vulnerability detection Date-time
+    VulnerabilityStats:
+      type: object
+      properties:
+        high:
+          $ref: '#/components/schemas/VulnerabilityStatsItem'
+        medium:
+          $ref: '#/components/schemas/VulnerabilityStatsItem'
+        low:
+          $ref: '#/components/schemas/VulnerabilityStatsItem'
+        info:
+          $ref: '#/components/schemas/VulnerabilityStatsItem'
+    VulnerabilityStatsItem:
+      type: object
+      properties:
+        real:
+          type: integer
+          example: 2
+        fixed:
+          type: integer
+          example: 1
+    VulnerabilityData:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: Unique hash of found vulnerability. May be shared across scans and sites.
+          example: 00d6b92b6c7ff4cd36ac0f8d546bbfcd4f5cac4a02e8f635e96689fb8ba4667f
+        channel:
+          type: string
+          description: Optional information about channel of injection
+        request:
+          type: string
+        responseRaw:
+          type: string
+          description: Optional body of server's response
+          example: '<!DOCTYPE html><html><body><p>Invalid subject: </textarea><script>confirm(20836)</script>'
+        responseTime:
+          type: string
+          description: Response execution time in seconds
+        matches:
+          $ref: '#/components/schemas/XHRMatchesArray'
+        vector:
+          type: string
+          description: Optional string containing attack vector
+          example: </textarea><script>confirm(20836)</script>
+        extra:
+          type: string
+    XHRMatchesArray:
+      type: object
+      description: 'An array of found objects, which are usually relate to Information Exposure'
+      properties:
+        foundData:
+          type: array
+          items:
+            type: string
+            example: 192.168.154.1
+    XHRVulnerabilityType:
+      type: object
+      description: This object represents a class of known vulnerabilities
+      properties:
+        id:
+          type: integer
+          nullable: false
+          description: Unique ID of vulnerability type (can be used for how-to-fix URL pages)
+          example: 2
+        name:
+          type: string
+          nullable: false
+          description: Pretty-formatted human-readable name of vulnerability type
+          example: Cross-Site Scripting
+        categoryLocaleKey:
+          type: string
+          nullable: true
+          description: Locale key of a category to which the vulnerability belongs
+          example: code_injection
+        localeKey:
+          $ref: '#/components/schemas/vulnerabilityLocaleKey'
+    VulnerabilityType:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique ID of vulnerability type
+          example: 1
+        name:
+          description: Pretty-formatted human-readable name of vulnerability type
+          type: string
+        weName:
+          description: Internal name of vulnerability type
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    XHRNotification:
+      type: object
+      description: This object represents a notification usually sent via Websocket protocol
+      properties:
+        id:
+          type: integer
+          nullable: false
+          example: 15
+        read:
+          type: boolean
+          nullable: false
+          example: false
+        readAt:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        createdAt:
+          type: string
+          format: date-time
+        data:
+          type: object
+          nullable: false
+          description: Arbitrary notification data
+    Notification:
+      type: object
+      description: This object represents a notification usually sent via Websocket protocol
+      properties:
+        id:
+          type: integer
+          example: 15
+        read:
+          type: boolean
+          example: false
+        readAt:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        createdAt:
+          type: string
+          format: date-time
+        data:
+          type: object
+          description: Arbitrary notification data
+    sharedLinkTtlEnum:
+      type: integer
+      nullable: true
+      description: Shared link's time to live (in hours)
+      enum:
+        - 3
+        - 24
+        - 168
+        - 720
+        - 4320
+      example: 24
+    SharedLinkCreated:
+      type: object
+      description: This object represents a shared link created info
+      properties:
+        uuid:
+          type: string
+          nullable: false
+          description: Sharer link's UUID
+        ttl:
+          $ref: '#/components/schemas/sharedLinkTtlEnum'
+        emails:
+          description: List of emails that has permission for reading the scan report
+          type: array
+          nullable: true
+          example: [ john@example.com ]
+    APIToken:
+      type: object
+      description: Represents api token
+      properties:
+        token:
+          type: string
+          nullable: false
+security:
+  - cookieAuth: []
+servers:
+  - url: '{protocol}://web.rd.ptsecurity.ru/app/xhr/v2'
+    description: Testing BBS backend server
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: http
+tags:
+  - name: session
+    description: 'perform login/logout, manage tokens'
+  - name: account
+    description: 'change information about user, change/reset password, post a feedback'
+  - name: sites (general)
+    description: 'CRUD for sites, state management, verification control'
+  - name: sites (scans)
+    description: scan results and related data
+  - name: shared links
+    description: ''
+  - name: agents
+    description: 'manage/download agents, change settings, view statistics for them'
+  - name: notifications
+    description: 'get/remove notifications, mark them as read'
+  - name: other
+    description: 'EULA, FAQ, locales etc.'
+  - name: public
+    description: 'Non-XHR pages (email/recovery check, Agent linking)'
+paths:
+  /session/login:
+    post:
+      summary: Perform login using email and password
+      tags:
+        - session
+      security: []
+      description: This endpoint is subject to change due to authorization schema (cookies vs. JWT)
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/loginDataInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            set-cookie:
+              schema:
+                $ref: '#/components/schemas/sessionCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/errorResponse'
+                  - properties:
+                      ok:
+                        example: false
+                      error:
+                        properties:
+                          code:
+                            example: INVALID_CREDENTIALS
+                          description:
+                            example: Invalid login-password pair.
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rateLimitedResponse'
+  /session/logout:
+    post:
+      summary: Logs out current user
+      tags:
+        - session
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /agents:
+    get:
+      summary: Get array of all user agents. Returns empty array if there are no agents.
+      tags:
+        - agents
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRAgent'
+                        nullable: false
+  /agents/download:
+    get:
+      summary: Get agents' download links
+      tags:
+        - agents
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: Download links for agents for popular operating systems
+                        properties:
+                          github:
+                            type: string
+                            nullable: false
+                            description: Agent source code on GitHub
+                            example: 'https://github.com/PositiveTechnologies/SocksFusion'
+                          win:
+                            type: string
+                            nullable: false
+                            description: Download link for Windows
+                            example: 'https://web.rd.ptsecurity.ru/app/xhr/v2/agents/download/windows'
+                          linux:
+                            type: string
+                            nullable: false
+                            description: Download link for Linux
+                            example: 'https://web.rd.ptsecurity.ru/app/xhr/v2/agents/download/linux'
+                          macos:
+                            type: string
+                            nullable: false
+                            description: Download link for MacOS
+                            example: 'https://web.rd.ptsecurity.ru/app/xhr/v2/agents/download/macos'
+  /agents/activate:
+    post:
+      summary: Activate an agent with a code
+      tags:
+        - agents
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/agentActivationCodeInputJSON'
+      responses:
+        '200':
+          description: The agent was successfully activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        '403':
+          description: Activation code is either wrong or expired
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/errorResponse'
+                  - properties:
+                      ok:
+                        example: false
+                      error:
+                        properties:
+                          code:
+                            example: INVALID_CODE
+                          description:
+                            example: Activation code is invalid
+        '429':
+          description: The user has sent too many requests in a given amount of time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rateLimitedResponse'
+  '/agents/{agentID}':
+    get:
+      summary: Get info on specified agent
+      tags:
+        - agents
+      parameters:
+        - $ref: '#/components/parameters/agentID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAgent'
+  '/agents/{agentID}/settings':
+    post:
+      summary: Change settings for specified agent
+      tags:
+        - agents
+      requestBody:
+        $ref: '#/components/requestBodies/editAgentDataInputJSON'
+      parameters:
+        - $ref: '#/components/parameters/agentID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAgent'
+  '/agents/{agentID}/delete':
+    post:
+      summary: Remove specified agent
+      tags:
+        - agents
+      parameters:
+        - $ref: '#/components/parameters/agentID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /notifications:
+    get:
+      summary: Get all notifications
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRNotification'
+                        nullable: false
+  /notifications/count:
+    get:
+      summary: Get notifications count
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        nullable: false
+                        properties:
+                          count:
+                            example: 15
+                            type: integer
+                            nullable: false
+  '/notifications/{notificationID}':
+    get:
+      summary: Get specified notification
+      tags:
+        - notifications
+      parameters:
+        - $ref: '#/components/parameters/notificationID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRNotification'
+  '/notifications/{notificationID}/read':
+    post:
+      summary: Mark specified notification as read
+      tags:
+        - notifications
+      parameters:
+        - $ref: '#/components/parameters/notificationID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/notifications/{notificationID}/delete':
+    post:
+      summary: Delete specified notification
+      tags:
+        - notifications
+      parameters:
+        - $ref: '#/components/parameters/notificationID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account:
+    get:
+      summary: Get current user account settings
+      tags:
+        - account
+      security: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAccount'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+  /account/permissions:
+    get:
+      summary: Get current user role info (permissions and limits)
+      tags:
+        - account
+      security: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRRole'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+  /account/register:
+    post:
+      summary: Promote current user account from guest to registered user
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/registrationDataInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            set-cookie:
+              schema:
+                $ref: '#/components/schemas/sessionCookie'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAccount'
+  /account/register/guest:
+    post:
+      summary: Register anonymous guest account
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            set-cookie:
+              schema:
+                $ref: '#/components/schemas/sessionCookie'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAccount'
+        '429':
+          description: The user has sent too many requests in a given amount of time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rateLimitedResponse'
+  /account/settings:
+    post:
+      summary: Modify general information about user
+      tags:
+        - account
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/editAccountDataInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRAccount'
+  /account/delete:
+    post:
+      summary: Remove user account
+      tags:
+        - account
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/feedback:
+    post:
+      summary: Post a feedback from a feedback page
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/feedbackDataInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/password/change:
+    post:
+      summary: Set new password for authenticated user
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/changePasswordInputJSON'
+      tags:
+        - account
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/password/reset:
+    post:
+      summary: Reset password in case user has forgotten it (no auth required). Check-reset link from email should not be a part of XHR API.
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/resetPasswordDataInputJSON'
+      responses:
+        202:
+          description: 'Password reset mail was successfully sent'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        404:
+          description: 'Email is either not registered or is deleted'
+        429:
+          description: 'Password reset mail was sent recently'
+  /account/password/reset/validate:
+    post:
+      summary: Validate password reset token (no auth required). Check-reset link from email should not be a part of XHR API.
+      tags:
+        - account
+        - validation
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/validatePasswordResetTokenInputJSON'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/password:
+    post:
+      summary: Set new password after following password reset email link
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/setPasswordDataInputJSON'
+      responses:
+        '200':
+          description: Password was successfully set for an owner of the token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/confirmation:
+    post:
+      summary: Confirm email after following confirmation email link
+      tags:
+        - account
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/confirmEmailDataInputJSON'
+      responses:
+        '200':
+          description: Token owner email was successfully confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  /account/confirmation/resend:
+    post:
+      summary: Resend confirmation email. Confirmation link should not be a part of XHR API.
+      tags:
+        - account
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/confirmationResendDataInputJSON'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/apitoken':
+    get:
+      summary: Obtain APIToken for current user
+      tags:
+        - apitoken
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/APIToken'
+                    nullable: false
+        '404':
+          description: APIToken does not exist for current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/apiTokenLinkNotFound'
+    post:
+      summary: Create new or replace (if exists) APIToken for current user
+      tags:
+        - apitoken
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/APIToken'
+                    nullable: false
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/apiTokenCreatePermissionDenied'
+    delete:
+      summary: Delete APIToken for current user
+      tags:
+        - apitoken
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/apiTokenDeletePermissionDenied'
+        '404':
+          description: APIToken does not exist for current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/apiTokenLinkNotFound'
+  /sites:
+    get:
+      summary: Get (general) information about all user sites
+      tags:
+        - sites (general)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRSiteShort'
+                        nullable: false
+  /sites/add:
+    post:
+      summary: Create new site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/siteInputJSON'
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRSiteShort'
+                    nullable: false
+  /sites/add/validate:
+    post:
+      summary: Check the ability to add a site with some URL
+      tags:
+        - sites (general)
+        - validation
+      parameters:
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/validateSiteInputJSON'
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}':
+    get:
+      summary: Get full information about specified site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRSiteShort'
+                    nullable: false
+  '/sites/{siteID}/authentication/check':
+    post:
+      summary: Start authentication check for specified site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '202':
+          description: Authentication check task was successfully scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        '403':
+          description: Speficied site has no authentication settings defined
+        '412':
+          description: There is a problem with an agent that is needed to access the site.
+  '/sites/{siteID}/start':
+    post:
+      summary: Start scan for specified site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRScanShort'
+                        nullable: false
+
+        '400':
+          description: Scan has already been started
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/errorResponse'
+                  - properties:
+                      ok:
+                        example: false
+                      error:
+                        properties:
+                          code:
+                            example: SCAN_ALREADY_STARTED
+                          description:
+                            example: You have already started scan for this site. Click stop and the start to restart the scan.
+        '412':
+          description: There is a problem with an agent that is needed to access the site.
+  '/sites/{siteID}/stop':
+    post:
+      summary: Stop scan for specified site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/delete':
+    post:
+      summary: 'Delete specified site, stopping all scans and deleting any related data'
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/settings':
+    get:
+      summary: Get site settings
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRSiteSettings'
+    post:
+      summary: Change site settings
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/siteInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/verification/file':
+    get:
+      summary: Download HTML verification file for specified site
+      description: Server responds with an HTML file which should be placed at root path of target site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            Content-Disposition:
+              description: Indicates that content should be downloaded by browser as a file
+              schema:
+                type: string
+                example: attachment; filename=123456789.html
+          content:
+            text/html:
+              schema:
+                type: string
+                format: binary
+  '/sites/{siteID}/verification/check':
+    post:
+      summary: Enforce file verification for site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/fullscan/request':
+    post:
+      summary: Request full/optimal scan config for site
+      tags:
+        - sites (general)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/requestFullScanPermissionDenied'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/siteLinkNotFound'
+  '/sites/{siteID}/scans':
+    get:
+      summary: Get scan history for specified site
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRScanShort'
+                        nullable: false
+  '/sites/{siteID}/scans/{scanID}':
+    get:
+      summary: Get detailed information about specified scan
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRScanShort'
+  '/sites/{siteID}/scans/{scanID}/delete':
+    post:
+      summary: Delete scan
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+        - $ref: '#/components/parameters/csrfToken'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/scans/{scanID}/vulnerabilities':
+    get:
+      summary: Get list of vulnerabilities for specified scan
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRVulnerabilityShort'
+                        nullable: false
+  '/sites/{siteID}/scans/{scanID}/vulnerabilities/{vulnID}':
+    get:
+      summary: Get detailed information on specified vulnerability
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/vulnID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRVulnerabilityShort'
+  '/sites/{siteID}/scans/{scanID}/vulnerabilities/{vulnID}/mark':
+    post:
+      summary: Mark vulnerability as fixed/false-positive/starred
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/vulnID'
+        - $ref: '#/components/parameters/scanID'
+        - $ref: '#/components/parameters/csrfToken'
+      requestBody:
+        $ref: '#/components/requestBodies/markVulnerabilityDataInputJSON'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/sites/{siteID}/scans/{scanID}/summary':
+    get:
+      summary: 'Get summary for specified scan. Includes information about server software, 404/500 pages, auth status, etc.'
+      description: TODO refactor this endpoint
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRScanSummary'
+  '/sites/{siteID}/scans/{scanID}/detectable':
+    get:
+      summary: 'Get list of vulnerability types that are being checked by the scan'
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRVulnerabilityType'
+  '/sites/{siteID}/scans/{scanID}/shared':
+    post:
+      summary: 'Create shared link for current scan'
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      requestBody:
+        $ref: '#/components/requestBodies/sharedDataInputJSON'
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SharedLinkCreated'
+    get:
+      summary: 'Get shared links for current scan'
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SharedLinkCreated'
+  '/sites/{siteID}/scans/{scanID}/shared/{uuid}':
+    put:
+      summary: 'Edit shared link for current scan'
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+        - $ref: '#/components/parameters/sharedUUID'
+      requestBody:
+        $ref: '#/components/requestBodies/sharedDataInputJSON'
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SharedLinkCreated'
+    delete:
+      summary: 'Delete shared link'
+      tags:
+        - sites (scans)
+      parameters:
+        - $ref: '#/components/parameters/siteID'
+        - $ref: '#/components/parameters/scanID'
+        - $ref: '#/components/parameters/sharedUUID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseResponse'
+  '/shared/{uuid}':
+    get:
+      summary: 'Get detailed information about specified scan'
+      description: need response review
+      tags:
+        - shared links
+      parameters:
+        - $ref: '#/components/parameters/sharedUUID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          site:
+                            $ref: '#/components/schemas/XHRSiteShared'
+                          scan:
+                            $ref: '#/components/schemas/XHRScanShared'
+        '401':
+          description: Login required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkLoginRequired'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkPermissionDenied'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkNotFound'
+  '/shared/{uuid}/detectable':
+    get:
+      summary: 'Get list of vulnerability types that are being checked by the scan'
+      tags:
+        - shared links
+      parameters:
+        - $ref: '#/components/parameters/sharedUUID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRVulnerabilityType'
+        '401':
+          description: Login required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkLoginRequired'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkPermissionDenied'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkNotFound'
+  '/shared/{uuid}/summary':
+    get:
+      summary: 'Get summary for specified scan. Includes information about server software, 404/500 pages, auth status, etc.'
+      tags:
+        - shared links
+      parameters:
+        - $ref: '#/components/parameters/sharedUUID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRVulnerabilityType'
+        '401':
+          description: Login required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkLoginRequired'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkPermissionDenied'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkNotFound'
+  '/shared/{uuid}/vulnerabilities':
+    get:
+      summary: Get list of vulnerabilities for specified scan
+      tags:
+        - shared links
+      parameters:
+        - $ref: '#/components/parameters/sharedUUID'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/XHRVulnerabilityType'
+        '401':
+          description: Login required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkLoginRequired'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkPermissionDenied'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/sharedLinkNotFound'
+  '/l10n/{localeName}/faq':
+    get:
+      summary: Get FAQ page info
+      tags:
+        - other
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeName'
+      responses:
+        '200':
+          description: Responded with FAQ page info
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRFaqLocalization'
+  '/l10n/{localeName}/eula':
+    get:
+      summary: Get EULA terms
+      tags:
+        - other
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeName'
+      responses:
+        '200':
+          description: Responded with EULA terms
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHREulaLocalization'
+  '/l10n/{localeName}/vulnerabilities':
+    get:
+      summary: Vulnerabilities localization list
+      tags:
+        - other
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeName'
+      responses:
+        '200':
+          description: Responded with locale
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRVulnLocalization'
+  '/l10n/{localeName}/categories':
+    get:
+      summary: Vulnerability categories localization list
+      tags:
+        - other
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeName'
+      responses:
+        '200':
+          description: Responded with locale
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRVulnCategoryLocalization'
+  '/l10n/{localeName}/vulnerabilities/{vulnerabilityLocaleKey}':
+    get:
+      summary: Vulnerabilities localization list
+      tags:
+        - other
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeName'
+        - $ref: '#/components/parameters/vulnerabilityLocaleKey'
+      responses:
+        '200':
+          description: Responded with locale
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/baseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/XHRVulnLocalization'
+  /agent_activation:
+    post:
+      summary: Create new authentication information for an agent
+      tags:
+        - public
+      security: []
+      responses:
+        '201':
+          description: The authentication token and its activation code was successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                  - code
+                properties:
+                  token:
+                    type: string
+                    description: The unique token which is used by the agent to authenticate on a proxy server
+                    minLength: 32
+                    example: 7vxDqNxedSxNtNE0gdw9Yuat6Sx0H04y
+                  code:
+                    type: string
+                    description: The human-readable activation code which is used to manually activate the token
+                    minLength: 6
+                    example: 49EQGA
+        '429':
+          description: The user has sent too many requests in a given amount of time
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: Error description
+                    example: Too Many Requests
+  '/download/agent/{filename}':
+    get:
+      summary: Download tokenless agent
+      tags:
+        - public
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/agentFilename'
+      responses:
+        '200':
+          description: Agent binary downloaded
+        '404':
+          description: No such agent available

@@ -1,0 +1,80 @@
+plugins {
+    id 'java-library'
+    id 'java-test-fixtures'
+    id 'org.hidetake.swagger.generator' version '2.19.2'
+}
+
+group = "${rootGroup}.vijn"
+
+dependencies {
+    // swaggerCodegen 'org.openapitools:openapi-generator-cli:5.1.1'
+    swaggerCodegen 'org.openapitools:openapi-generator-cli:5.4.0'
+    // swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'
+
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
+    api 'com.squareup.okhttp3:okhttp:4.2.2'
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    api 'com.google.code.gson:gson:2.8.6'
+
+    // Need this as generated code uses annotations like @Nullable etc.
+    // https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    // https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.2'
+
+
+    // Used inside generated code
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
+
+    // Used inside generated code
+    // https://mvnrepository.com/artifact/io.swagger/swagger-annotations
+    implementation 'io.swagger:swagger-annotations:1.6.2'
+
+    // Used inside generated code
+    // https://mvnrepository.com/artifact/io.gsonfire/gson-fire
+    implementation 'io.gsonfire:gson-fire:1.8.5'
+
+    // Need this as generated code uses annotations like @Nullable etc.
+    // https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    // Need this to write tests that use data stored in 7zip-packed resource files
+    // like issues model, scan settings etc.
+    // Make test-tools fixtures available to descendants
+    // testFixturesApi(testFixtures(project(":ptai-test-tools")))
+    // testImplementation(testFixtures(project(":ptai-test-tools")))
+}
+
+javadoc {
+    // OpenAPI-generated files contain some javadoc issues, let's ignore them
+    // options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+jar {
+    // See https://www.jenkins.io/blog/2018/01/13/jep-200/
+    manifest {
+        attributes 'Jenkins-ClassFilter-Whitelisted': 'true'
+    }
+}
+
+swaggerSources {
+    xhr2 {
+        inputFile = file('src/main/resources/api/v2/swagger-xhr-v2.yaml')
+        code {
+            language = 'java'
+            library = 'okhttp-gson'
+            additionalProperties = [
+                    'modelPackage': 'com.ptsecurity.appsec.vijn.server.v2.xhr.model',
+                    'apiPackage': 'com.ptsecurity.appsec.vijn.server.v2.xhr.api',
+                    'dateLibrary': 'java8',
+                    'hideGenerationTimestamp': 'true'
+            ]
+        }
+    }
+}
+
+compileJava.dependsOn swaggerSources.xhr2.code
+
+sourceSets.main.java.srcDirs "${swaggerSources.xhr2.code.outputDir}/src/main/java"
+
