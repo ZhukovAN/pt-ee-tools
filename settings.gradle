@@ -12,4 +12,5 @@ rootProject.name = 'pt-ee-tools'
 
 include ':vijn:rest-api'
 include ':vijn:i18n'
+include ':vijn:jenkins-plugin'
 include ':ai:i18n'
